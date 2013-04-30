@@ -48,10 +48,8 @@ func main() {
     runtime.GOMAXPROCS(runtime.NumCPU())
     sem := make(chan int, *maxGr)
     out := make(chan []byte)
-    fmt.Println(allArgs)
     for i := 0; i < len(allArgs); i++ {
         args := strings.Split(allArgs[i], " ")
-	fmt.Println(args)
         // Append prefix
         if len(*prefix) != 0 {
 	    args[0] = *prefix + args[0]
