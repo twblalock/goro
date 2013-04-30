@@ -1,4 +1,4 @@
-Goro is a simple program that uses goroutines to run multiple arguments concurrently for the same command.
+Goro is a simple utility that uses goroutines to run multiple arguments concurrently for the same command.
 
 Installation:
 `go build goro.go`
