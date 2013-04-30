@@ -1,0 +1,26 @@
+Goro is a simple program that uses goroutines to run multiple arguments concurrently for the same command.
+
+Installation:
+`go build gorun.go`
+Copy or link the binary to a directory in your PATH
+
+Usage: goro -c command arg1 arg2 arg3...
+-c="": command to run
+-f="": filename containing a newline-separated list of arguments
+-n=1: max number of goroutines
+-p="": prefix for every argument
+-s="": suffix for every argument
+
+Examples:
+
+Echo a list of words
+gorun -c echo "first" "second" "third"
+
+Echo a list of names from a file
+gorun -c echo -f names.txt
+
+Curl a url with a different query each time
+gorun -c "curl -s" -p "http://a.paginated.website.com/?page=" "1" "2" "3" "4"
+
+Curl many urls concurrently (with a maximum of 30 at a time)
+gorun -c "curl -s" -n 30 -f list_of_urls.txt

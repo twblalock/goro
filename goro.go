@@ -17,8 +17,8 @@ var prefix = flag.String("p", "", "prefix for every argument")
 var suffix = flag.String("s", "", "suffix for every argument")
 
 var usage = func() {
-    fmt.Fprintf(os.Stderr, "%s runs multiple arguments for the same command concurrently\n", os.Args[0])
-    fmt.Fprintf(os.Stderr, "Usage of %s: %s command arg1 arg2 arg3...\n", os.Args[0], os.Args[0])
+    fmt.Fprintf(os.Stderr, "%s runs multiple arguments concurrently for the same command\n", os.Args[0])
+    fmt.Fprintf(os.Stderr, "Usage of %s: %s -c command arg1 arg2 arg3...\n", os.Args[0], os.Args[0])
     flag.PrintDefaults()
 }
 
