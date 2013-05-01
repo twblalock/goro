@@ -52,7 +52,10 @@ func main() {
 
     runtime.GOMAXPROCS(runtime.NumCPU())
     sem := make(chan int, *maxGr)
-    out := make(chan []byte)
+    for i := 0; i < *maxGr; i++ {
+        sem <- 1
+    }
+
     for i := 0; i < len(allArgs); i++ {
         args := strings.Split(allArgs[i], " ")
         if len(*prefix) != 0 {
@@ -64,15 +67,16 @@ func main() {
 	args = append([]string{ *cmd }, args...)
 
         cmd := exec.Cmd{Path: path, Args: args}
+	<- sem
         go func(cmd exec.Cmd) {
+	    out, err := cmd.Output()
+	    if nil != err {
+                fmt.Fprintf(os.Stderr, "%s", err)
+            }
+            if nil != out {
+                fmt.Fprintf(os.Stdout, "%s", out)
+            }
             sem <- 1
-            cmdOutput, _ := cmd.Output()
-            out <- cmdOutput
-            <-sem
         }(cmd)
-    }
-
-    for _ = range allArgs {
-        fmt.Fprintf(os.Stdout, "%s", <-out)
     }
 }
