@@ -52,6 +52,7 @@ func main() {
 
     runtime.GOMAXPROCS(runtime.NumCPU())
     sem := make(chan int, *maxGr)
+    quit := make(chan int) // Used when all goroutines are finsihed
     for i := 0; i < *maxGr; i++ {
         sem <- 1
     }
@@ -68,7 +69,7 @@ func main() {
 
         cmd := exec.Cmd{Path: path, Args: args}
 	<- sem
-        go func(cmd exec.Cmd) {
+        go func(cmd exec.Cmd, i int) {
 	    out, err := cmd.Output()
 	    if nil != err {
                 fmt.Fprintf(os.Stderr, "%s", err)
@@ -77,6 +78,11 @@ func main() {
                 fmt.Fprintf(os.Stdout, "%s", out)
             }
             sem <- 1
-        }(cmd)
+	    if i == len(allArgs) - 1 {
+                quit <- 1
+            }
+        }(cmd, i)
     }
+
+    <- quit
 }
