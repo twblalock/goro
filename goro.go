@@ -8,6 +8,7 @@ import (
     "os/exec"
     "runtime"
     "strings"
+    "sync"
 )
 
 var fileName = flag.String("f", "", "filename containing a newline-separated list of arguments")
@@ -27,7 +28,7 @@ func main() {
     if len(flag.Args()) == 0 {
         fmt.Fprint(os.Stderr, "Not enough arguments\n")
         usage()
-	os.Exit(1)
+        os.Exit(1)
     }
 
     fullCmd := flag.Args()[0]
@@ -51,37 +52,35 @@ func main() {
 
     runtime.GOMAXPROCS(runtime.NumCPU())
     sem := make(chan int, *maxGr)
-    quit := make(chan int) // Used when all goroutines are finsihed
     for i := 0; i < *maxGr; i++ {
         sem <- 1
     }
-
+    var wg sync.WaitGroup
     for i := 0; i < len(allArgs); i++ {
         args := strings.Split(allArgs[i], " ")
         if len(*prefix) != 0 {
-	    args[0] = *prefix + args[0]
+            args[0] = *prefix + args[0]
         }
         if len(*suffix) != 0 {
             args[len(args) - 1] = args[len(args) - 1] + *suffix
         }
-	args = append([]string{fullCmd}, args...)
+        args = append([]string{fullCmd}, args...)
 
         cmd := exec.Cmd{Path: path, Args: args}
-	<- sem
+        <- sem
+	wg.Add(1)
         go func(cmd exec.Cmd, i int) {
-	    out, err := cmd.Output()
-	    if nil != err {
+            out, err := cmd.Output()
+            if nil != err {
                 fmt.Fprintf(os.Stderr, "%s", err)
             }
             if nil != out {
                 fmt.Fprintf(os.Stdout, "%s", out)
             }
+	    wg.Done()
             sem <- 1
-	    if i == len(allArgs) - 1 {
-                quit <- 1
-            }
         }(cmd, i)
     }
 
-    <- quit
+    wg.Wait()
 }
