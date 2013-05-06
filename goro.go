@@ -10,28 +10,28 @@ import (
     "strings"
 )
 
-var cmd = flag.String("c", "", "command to run")
 var fileName = flag.String("f", "", "filename containing a newline-separated list of arguments")
-var maxGr = flag.Int("n", 1, "max number of goroutines")
+var maxGr = flag.Int("n", 1, "max number of concurrent goroutines")
 var prefix = flag.String("p", "", "prefix for every argument")
 var suffix = flag.String("s", "", "suffix for every argument")
 
 var usage = func() {
     fmt.Fprintf(os.Stderr, "%s runs multiple arguments concurrently for the same command\n", os.Args[0])
-    fmt.Fprintf(os.Stderr, "Usage of %s: %s -c command arg1 arg2 arg3...\n", os.Args[0], os.Args[0])
+    fmt.Fprintf(os.Stderr, "Usage of %s: %s [-n numConcurrent] [-f argFile] [-p prefix] [-s suffix] command [arg1 arg2 arg3...]\n", os.Args[0], os.Args[0])
     flag.PrintDefaults()
 }
 
 func main() {
     flag.Usage = usage
     flag.Parse()
-
-    if len(*cmd) == 0 {
+    if len(flag.Args()) == 0 {
+        fmt.Fprint(os.Stderr, "Not enough arguments\n")
         usage()
 	os.Exit(1)
     }
 
-    path, err := exec.LookPath(strings.Split(*cmd, " ")[0])
+    fullCmd := flag.Args()[0]
+    path, err := exec.LookPath(strings.Split(fullCmd, " ")[0])
     if nil != err {
         fmt.Fprint(os.Stderr, err)
         os.Exit(1)
@@ -44,11 +44,10 @@ func main() {
             fmt.Fprint(os.Stderr, err)
             os.Exit(1)
         } else {
-            allArgs = strings.Split(strings.Trim(string(content), "\n"), "\n")
+            allArgs = append(allArgs, strings.Split(strings.Trim(string(content), "\n"), "\n")...)
         }
-    } else {
-        allArgs = flag.Args()
     }
+    allArgs = append(allArgs, flag.Args()[1:]...)
 
     runtime.GOMAXPROCS(runtime.NumCPU())
     sem := make(chan int, *maxGr)
@@ -65,7 +64,7 @@ func main() {
         if len(*suffix) != 0 {
             args[len(args) - 1] = args[len(args) - 1] + *suffix
         }
-	args = append([]string{ *cmd }, args...)
+	args = append([]string{fullCmd}, args...)
 
         cmd := exec.Cmd{Path: path, Args: args}
 	<- sem
