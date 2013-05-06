@@ -1,2 +1,1 @@
-- Accept args from a pipe
-- Figure out how to get rid of the "-c" flag for the command
+- Get rid of the "-c" flag for the command - commands with options can be put in quotes.
